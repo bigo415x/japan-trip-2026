@@ -70,8 +70,10 @@ body {
 .city-nav-wrap::after  { right:0; background:linear-gradient(to left,  var(--ink) 30%, transparent); opacity:1; }
 .city-nav-wrap.nav-scrolled::before { opacity:1; }
 .city-nav-wrap.nav-at-end::after    { opacity:0; }
-.city-nav { display:flex; border-bottom:2px solid var(--vermillion); overflow-x:auto; scrollbar-width:none; }
-.city-nav::-webkit-scrollbar { display:none; }
+.city-nav { display:flex; border-bottom:2px solid var(--vermillion); overflow-x:auto; scrollbar-width:thin; scrollbar-color: var(--vermillion) rgba(255,255,255,0.1); }
+.city-nav::-webkit-scrollbar { display:block; height:3px; }
+.city-nav::-webkit-scrollbar-track { background:rgba(255,255,255,0.1); }
+.city-nav::-webkit-scrollbar-thumb { background:var(--vermillion); border-radius:3px; }
 .city-tab { flex:0 0 auto; padding:14px 12px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
 .city-tab.active { color:var(--washi); border-bottom-color:var(--vermillion); }
 .city-tab:hover { color:var(--washi); }
@@ -95,7 +97,7 @@ body {
 
 /* ── CAROUSEL ── */
 .carousel-wrap { position:relative; padding:0 16px 20px; overflow:hidden; }
-.carousel-track { display:flex; gap:12px; padding-bottom:4px; transition:transform 0.45s cubic-bezier(0.25,0.1,0.25,1); will-change:transform; }
+.carousel-track { display:flex; gap:12px; padding-bottom:4px; transition:transform 0.45s cubic-bezier(0.25,0.1,0.25,1); will-change:transform; touch-action:pan-y; }
 .sight-card { flex-shrink:0; width:180px; scroll-snap-align:start; background:#fff; border-radius:16px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--line); }
 .sight-card img { width:100%; height:130px; object-fit:cover; display:block; }
 .sight-caption { padding:10px 12px 12px; }
@@ -1111,12 +1113,25 @@ function setupCarousel(trackId, dotsId) {
 
   // Touch swipe support
   let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwiping = false;
   track.addEventListener('touchstart', e => {
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = false;
   }, { passive: true });
+  track.addEventListener('touchmove', e => {
+    const dx = Math.abs(e.touches[0].clientX - touchStartX);
+    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+    if (dx > dy && dx > 8) {
+      isSwiping = true;
+      e.preventDefault(); // stop page scroll on horizontal swipe
+    }
+  }, { passive: false });
   track.addEventListener('touchend', e => {
+    if (!isSwiping) return;
     const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 40) goTo(dx < 0 ? idx + 1 : idx - 1);
+    if (Math.abs(dx) > 30) goTo(dx < 0 ? idx + 1 : idx - 1);
   }, { passive: true });
 
   // Recalculate card width on resize/rotation
