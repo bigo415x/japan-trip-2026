@@ -63,7 +63,14 @@ body {
 .countdown-sep { font-size:28px; color:var(--vermillion); opacity:0.7; align-self:flex-start; margin-top:2px; }
 
 /* ── CITY TABS ── */
-.city-nav { position:sticky; top:0; z-index:100; background:var(--ink); display:flex; border-bottom:2px solid var(--vermillion); overflow-x:auto; scrollbar-width:none; }
+.city-nav-wrap { position:sticky; top:0; z-index:100; background:var(--ink); }
+.city-nav-wrap::before,
+.city-nav-wrap::after { content:''; position:absolute; top:0; bottom:2px; width:48px; pointer-events:none; z-index:1; transition:opacity 0.25s; }
+.city-nav-wrap::before { left:0; background:linear-gradient(to right, var(--ink) 30%, transparent); opacity:0; }
+.city-nav-wrap::after  { right:0; background:linear-gradient(to left,  var(--ink) 30%, transparent); opacity:1; }
+.city-nav-wrap.nav-scrolled::before { opacity:1; }
+.city-nav-wrap.nav-at-end::after    { opacity:0; }
+.city-nav { display:flex; border-bottom:2px solid var(--vermillion); overflow-x:auto; scrollbar-width:none; }
 .city-nav::-webkit-scrollbar { display:none; }
 .city-tab { flex:0 0 auto; padding:14px 12px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
 .city-tab.active { color:var(--washi); border-bottom-color:var(--vermillion); }
@@ -232,6 +239,7 @@ body {
 </div>
 
 <!-- CITY NAV -->
+<div class="city-nav-wrap" id="city-nav-wrap">
 <nav class="city-nav" id="city-nav">
   <button class="city-tab active" data-city="tokio" onclick="showCity('tokio',this)">🗼 <span class="es-text">Tokio</span><span class="en-text">Tokyo</span></button>
   <button class="city-tab" data-city="kioto" onclick="showCity('kioto',this)">⛩️ <span class="es-text">Kioto</span><span class="en-text">Kyoto</span></button>
@@ -239,6 +247,7 @@ body {
   <button class="city-tab" data-city="frases" onclick="showCity('frases',this)">🗣️ <span class="es-text">Frases</span><span class="en-text">Phrases</span></button>
   <button class="city-tab" data-city="consejos" onclick="showCity('consejos',this)">💡 <span class="es-text">Consejos</span><span class="en-text">Tips</span></button>
 </nav>
+</div>
 
 <main class="main">
 
@@ -971,8 +980,20 @@ function showCity(city, btn) {
   document.querySelectorAll('.city-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('sec-' + city).classList.add('active');
   btn.classList.add('active');
-  window.scrollTo({ top: document.querySelector('.city-nav').offsetTop - 2, behavior: 'smooth' });
+  window.scrollTo({ top: document.getElementById('city-nav-wrap').offsetTop - 2, behavior: 'smooth' });
 }
+
+// ── NAV FADE EDGES ──
+(function() {
+  const nav = document.getElementById('city-nav');
+  const wrap = document.getElementById('city-nav-wrap');
+  function updateFades() {
+    wrap.classList.toggle('nav-scrolled', nav.scrollLeft > 8);
+    wrap.classList.toggle('nav-at-end', nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 8);
+  }
+  nav.addEventListener('scroll', updateFades, { passive: true });
+  updateFades();
+})();
 
 // ── PHRASES DATA ──
 const phrases = [
