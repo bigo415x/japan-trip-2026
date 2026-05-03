@@ -94,9 +94,8 @@ body {
 .section-label-text { font-family:'Noto Serif JP',serif; font-size:13px; letter-spacing:3px; color:var(--ink-light); text-transform:uppercase; white-space:nowrap; }
 
 /* ── CAROUSEL ── */
-.carousel-wrap { position:relative; padding:0 16px 20px; }
-.carousel-track { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding-bottom:4px; }
-.carousel-track::-webkit-scrollbar { display:none; }
+.carousel-wrap { position:relative; padding:0 16px 20px; overflow:hidden; }
+.carousel-track { display:flex; gap:12px; padding-bottom:4px; transition:transform 0.45s cubic-bezier(0.25,0.1,0.25,1); will-change:transform; }
 .sight-card { flex-shrink:0; width:180px; scroll-snap-align:start; background:#fff; border-radius:16px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--line); }
 .sight-card img { width:100%; height:130px; object-fit:cover; display:block; }
 .sight-caption { padding:10px 12px 12px; }
@@ -1093,33 +1092,35 @@ function setupCarousel(trackId, dotsId) {
   const dots = dotsEl.querySelectorAll('.carousel-dot');
 
   let idx = 0;
-  let isProgrammatic = false;
-  let resumeTimer = null;
+  let cardW = 0;
 
-  function goTo(newIdx) {
-    idx = newIdx;
-    isProgrammatic = true;
-    const cardW = cards[0].offsetWidth + 12;
-    track.scrollTo({ left: idx * cardW, behavior: 'smooth' });
-    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-    setTimeout(() => { isProgrammatic = false; }, 700);
+  function getCardW() {
+    // Cache width; fall back to CSS value (180px card + 12px gap) if section hidden
+    if (!cardW) cardW = (cards[0].offsetWidth || 180) + 12;
+    return cardW;
   }
 
-  // Auto-loop every 3.5s — wraps back to 0 for true infinite loop
-  const autoTimer = setInterval(() => {
-    goTo((idx + 1) % count);
-  }, 3500);
+  function goTo(newIdx) {
+    idx = ((newIdx % count) + count) % count;
+    track.style.transform = `translateX(-${idx * getCardW()}px)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
 
-  // Only update dots on manual user swipe
-  track.addEventListener('scroll', () => {
-    if (isProgrammatic) return;
-    const cardW = cards[0].offsetWidth + 12;
-    const scrollIdx = Math.round(track.scrollLeft / cardW);
-    if (scrollIdx !== idx) {
-      idx = scrollIdx;
-      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-    }
-  });
+  // Auto-loop every 3.5s
+  setInterval(() => goTo(idx + 1), 3500);
+
+  // Touch swipe support
+  let touchStartX = 0;
+  track.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  track.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) goTo(dx < 0 ? idx + 1 : idx - 1);
+  }, { passive: true });
+
+  // Recalculate card width on resize/rotation
+  window.addEventListener('resize', () => { cardW = 0; goTo(idx); }, { passive: true });
 }
 
 // ── COUNTDOWN + TODAY ──
