@@ -64,19 +64,12 @@ body {
 
 /* ── CITY TABS ── */
 .city-nav-wrap { position:sticky; top:0; z-index:100; background:var(--ink); }
-.city-nav-wrap::before,
-.city-nav-wrap::after { content:''; position:absolute; top:0; bottom:2px; width:48px; pointer-events:none; z-index:1; transition:opacity 0.25s; }
-.city-nav-wrap::before { left:0; background:linear-gradient(to right, var(--ink) 30%, transparent); opacity:0; }
-.city-nav-wrap::after  { right:0; background:linear-gradient(to left,  var(--ink) 30%, transparent); opacity:1; }
-.city-nav-wrap.nav-scrolled::before { opacity:1; }
-.city-nav-wrap.nav-at-end::after    { opacity:0; }
-.city-nav { display:flex; border-bottom:2px solid var(--vermillion); overflow-x:auto; scrollbar-width:thin; scrollbar-color: var(--vermillion) rgba(255,255,255,0.1); }
-.city-nav::-webkit-scrollbar { display:block; height:3px; }
-.city-nav::-webkit-scrollbar-track { background:rgba(255,255,255,0.1); }
-.city-nav::-webkit-scrollbar-thumb { background:var(--vermillion); border-radius:3px; }
-.city-tab { flex:0 0 auto; padding:14px 12px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+.city-nav { display:flex; }
+.city-nav-cities { border-bottom:1px solid rgba(247,242,232,0.12); }
+.city-nav-extras { border-bottom:2px solid var(--vermillion); }
+.city-tab { flex:1; padding:11px 8px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
 .city-tab.active { color:var(--washi); border-bottom-color:var(--vermillion); }
-.city-tab:hover { color:var(--washi); }
+.city-tab:hover:not(.active) { color:rgba(247,242,232,0.8); }
 
 /* ── CITY SECTION ── */
 .main { padding:0 0 80px; }
@@ -109,11 +102,11 @@ body {
 .carousel-dot.active { background:var(--vermillion); }
 
 /* ── EVENT CARD ── */
-.event-card { margin:0 16px 12px; border-radius:18px; overflow:hidden; position:relative; min-height:180px; box-shadow:var(--shadow-card); }
-.event-card img { width:100%; height:200px; object-fit:cover; display:block; filter:brightness(0.55) saturate(1.1); }
-.event-card-content { position:absolute; inset:0; padding:20px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(to top, rgba(26,18,8,0.9) 55%, transparent); }
-.event-tag { display:inline-block; background:rgba(192,57,43,0.75); color:#fff; font-size:12px; padding:4px 12px; border-radius:999px; margin-bottom:8px; width:fit-content; }
-.event-title { font-family:'Noto Serif JP',serif; font-size:20px; color:var(--washi); font-weight:700; margin-bottom:6px; line-height:1.3; }
+.event-card { margin:0 16px 12px; border-radius:18px; overflow:hidden; box-shadow:var(--shadow-card); background:var(--ink); }
+.event-card img { width:100%; height:180px; object-fit:cover; display:block; filter:brightness(0.65) saturate(1.1); }
+.event-card-content { padding:16px 20px 20px; background:linear-gradient(to bottom, rgba(26,18,8,0.92), var(--ink)); }
+.event-tag { display:inline-block; background:var(--vermillion); color:#fff; font-size:12px; padding:4px 12px; border-radius:999px; margin-bottom:10px; width:fit-content; }
+.event-title { font-family:'Noto Serif JP',serif; font-size:20px; color:var(--washi); font-weight:700; margin-bottom:8px; line-height:1.3; }
 .event-desc { font-size:14px; color:rgba(247,242,232,0.85); line-height:1.5; }
 
 /* ── DAY CARDS ── */
@@ -241,13 +234,15 @@ body {
 
 <!-- CITY NAV -->
 <div class="city-nav-wrap" id="city-nav-wrap">
-<nav class="city-nav" id="city-nav">
-  <button class="city-tab active" data-city="tokio" onclick="showCity('tokio',this)">🗼 <span class="es-text">Tokio</span><span class="en-text">Tokyo</span></button>
-  <button class="city-tab" data-city="kioto" onclick="showCity('kioto',this)">⛩️ <span class="es-text">Kioto</span><span class="en-text">Kyoto</span></button>
-  <button class="city-tab" data-city="osaka" onclick="showCity('osaka',this)">🦌🏮 <span class="es-text">Nara/Osaka</span><span class="en-text">Nara/Osaka</span></button>
-  <button class="city-tab" data-city="frases" onclick="showCity('frases',this)">🗣️ <span class="es-text">Frases</span><span class="en-text">Phrases</span></button>
-  <button class="city-tab" data-city="consejos" onclick="showCity('consejos',this)">💡 <span class="es-text">Consejos</span><span class="en-text">Tips</span></button>
-</nav>
+  <nav class="city-nav city-nav-cities">
+    <button class="city-tab active" data-city="tokio" onclick="showCity('tokio',this)">🗼 <span class="es-text">Tokio</span><span class="en-text">Tokyo</span></button>
+    <button class="city-tab" data-city="kioto" onclick="showCity('kioto',this)">⛩️ <span class="es-text">Kioto</span><span class="en-text">Kyoto</span></button>
+    <button class="city-tab" data-city="osaka" onclick="showCity('osaka',this)">🦌🏮 <span class="es-text">Nara/Osaka</span><span class="en-text">Nara/Osaka</span></button>
+  </nav>
+  <nav class="city-nav city-nav-extras">
+    <button class="city-tab" data-city="frases" onclick="showCity('frases',this)">🗣️ <span class="es-text">Frases</span><span class="en-text">Phrases</span></button>
+    <button class="city-tab" data-city="consejos" onclick="showCity('consejos',this)">💡 <span class="es-text">Consejos</span><span class="en-text">Tips</span></button>
+  </nav>
 </div>
 
 <main class="main">
@@ -984,18 +979,6 @@ function showCity(city, btn) {
   window.scrollTo({ top: document.getElementById('city-nav-wrap').offsetTop - 2, behavior: 'smooth' });
 }
 
-// ── NAV FADE EDGES ──
-(function() {
-  const nav = document.getElementById('city-nav');
-  const wrap = document.getElementById('city-nav-wrap');
-  function updateFades() {
-    wrap.classList.toggle('nav-scrolled', nav.scrollLeft > 8);
-    wrap.classList.toggle('nav-at-end', nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 8);
-  }
-  nav.addEventListener('scroll', updateFades, { passive: true });
-  updateFades();
-})();
-
 // ── PHRASES DATA ──
 const phrases = [
   { jp: 'すみません', romaji: 'Sumimasen', es: 'Perdón / Disculpe — sirve para todo: pedir ayuda, llamar al mesero, pasar entre personas', en: 'Excuse me / Sorry — works for everything: asking for help, calling the waiter, passing through a crowd' },
@@ -1097,7 +1080,6 @@ function setupCarousel(trackId, dotsId) {
   let cardW = 0;
 
   function getCardW() {
-    // Cache width; fall back to CSS value (180px card + 12px gap) if section hidden
     if (!cardW) cardW = (cards[0].offsetWidth || 180) + 12;
     return cardW;
   }
@@ -1108,10 +1090,7 @@ function setupCarousel(trackId, dotsId) {
     dots.forEach((d, i) => d.classList.toggle('active', i === idx));
   }
 
-  // Auto-loop every 3.5s
-  setInterval(() => goTo(idx + 1), 3500);
-
-  // Touch swipe support
+  // Manual swipe only — no auto-advance
   let touchStartX = 0;
   let touchStartY = 0;
   let isSwiping = false;
@@ -1125,7 +1104,7 @@ function setupCarousel(trackId, dotsId) {
     const dy = Math.abs(e.touches[0].clientY - touchStartY);
     if (dx > dy && dx > 8) {
       isSwiping = true;
-      e.preventDefault(); // stop page scroll on horizontal swipe
+      e.preventDefault();
     }
   }, { passive: false });
   track.addEventListener('touchend', e => {
@@ -1134,7 +1113,6 @@ function setupCarousel(trackId, dotsId) {
     if (Math.abs(dx) > 30) goTo(dx < 0 ? idx + 1 : idx - 1);
   }, { passive: true });
 
-  // Recalculate card width on resize/rotation
   window.addEventListener('resize', () => { cardW = 0; goTo(idx); }, { passive: true });
 }
 
