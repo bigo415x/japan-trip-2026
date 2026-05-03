@@ -65,7 +65,7 @@ body {
 /* ── CITY TABS ── */
 .city-nav { position:sticky; top:0; z-index:100; background:var(--ink); display:flex; border-bottom:2px solid var(--vermillion); overflow-x:auto; scrollbar-width:none; }
 .city-nav::-webkit-scrollbar { display:none; }
-.city-tab { flex:1; min-width:0; padding:14px 10px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+.city-tab { flex:0 0 auto; padding:14px 12px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
 .city-tab.active { color:var(--washi); border-bottom-color:var(--vermillion); }
 .city-tab:hover { color:var(--washi); }
 
@@ -1071,28 +1071,33 @@ function setupCarousel(trackId, dotsId) {
   }
   const dots = dotsEl.querySelectorAll('.carousel-dot');
 
-  // Auto-loop every 3.5s
   let idx = 0;
-  let autoTimer = setInterval(() => {
-    idx = (idx + 1) % count;
+  let isProgrammatic = false;
+  let resumeTimer = null;
+
+  function goTo(newIdx) {
+    idx = newIdx;
+    isProgrammatic = true;
     const cardW = cards[0].offsetWidth + 12;
     track.scrollTo({ left: idx * cardW, behavior: 'smooth' });
     dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    setTimeout(() => { isProgrammatic = false; }, 700);
+  }
+
+  // Auto-loop every 3.5s — wraps back to 0 for true infinite loop
+  const autoTimer = setInterval(() => {
+    goTo((idx + 1) % count);
   }, 3500);
 
+  // Only update dots on manual user swipe
   track.addEventListener('scroll', () => {
-    clearInterval(autoTimer);
+    if (isProgrammatic) return;
     const cardW = cards[0].offsetWidth + 12;
     const scrollIdx = Math.round(track.scrollLeft / cardW);
-    dots.forEach((d, i) => d.classList.toggle('active', i === scrollIdx));
-    // Restart auto after pause
-    clearInterval(autoTimer);
-    autoTimer = setInterval(() => {
-      idx = (idx + 1) % count;
-      const cw = cards[0].offsetWidth + 12;
-      track.scrollTo({ left: idx * cw, behavior: 'smooth' });
+    if (scrollIdx !== idx) {
+      idx = scrollIdx;
       dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-    }, 3500);
+    }
   });
 }
 
