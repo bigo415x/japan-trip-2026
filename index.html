@@ -227,7 +227,7 @@ body {
 <div class="countdown-strip" id="countdown-strip">
   <div class="countdown-block">
     <div class="countdown-num" id="cd-days">--</div>
-    <div class="countdown-label"><span class="es-text">DÍAS</span><span class="en-text">DAYS</span></div>
+    <div class="countdown-label" id="cd-unit"><span class="es-text">DÍAS</span><span class="en-text">DAYS</span></div>
   </div>
   <div class="countdown-sep">·</div>
   <div style="font-size:16px;color:rgba(247,242,232,0.85);text-align:center" id="countdown-label">
@@ -1117,46 +1117,79 @@ function setupCarousel(trackId, dotsId) {
   window.addEventListener('resize', () => { cardW = 0; goTo(idx); }, { passive: true });
 }
 
-// ── COUNTDOWN + TODAY ──
+// ── HELPERS ──
+// Flight departs May 10 2026 1pm PDT (UTC-7 in May) = 20:00 UTC
+const FLIGHT_UTC = new Date('2026-05-10T20:00:00Z');
+const TRIP_DAYS  = ['2026-05-11','2026-05-12','2026-05-13','2026-05-14','2026-05-15',
+                    '2026-05-16','2026-05-17','2026-05-18','2026-05-19','2026-05-20',
+                    '2026-05-21','2026-05-22'];
+
+function getJSTDateStr() {
+  const d = new Date(Date.now() + 9 * 3600 * 1000);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+// ── COUNTDOWN ──
+function updateCountdown() {
+  const strip   = document.getElementById('countdown-strip');
+  const cdNum   = document.getElementById('cd-days');
+  const cdUnit  = document.getElementById('cd-unit');
+  const cdLabel = document.getElementById('countdown-label');
+
+  const diff    = FLIGHT_UTC.getTime() - Date.now(); // ms until flight
+  const jstDate = getJSTDateStr();
+  const dayIdx  = TRIP_DAYS.indexOf(jstDate);
+
+  if (dayIdx >= 0) {
+    // ── During the trip: Day 1 … Day 12 ──
+    strip.style.background = 'var(--vermillion)';
+    cdNum.textContent = dayIdx + 1;
+    cdNum.style.fontSize = '36px';
+    cdUnit.innerHTML = '<span class="es-text">DÍA</span><span class="en-text">DAY</span>';
+    cdLabel.innerHTML = '<span class="es-text">¡Estamos en Japón! 🌸</span><span class="en-text">We\'re in Japan! 🌸</span>';
+
+  } else if (diff > 48 * 3600 * 1000) {
+    // ── More than 48 h away: show days ──
+    strip.style.background = 'var(--ink)';
+    cdNum.textContent = Math.ceil(diff / 86400000);
+    cdUnit.innerHTML = '<span class="es-text">DÍAS</span><span class="en-text">DAYS</span>';
+    cdLabel.innerHTML = '<span class="es-text">hasta el vuelo ✈️</span><span class="en-text">until the flight ✈️</span>';
+
+  } else if (diff > 0) {
+    // ── Under 48 h: switch to hours ──
+    strip.style.background = 'var(--ink)';
+    cdNum.textContent = Math.ceil(diff / 3600000);
+    cdUnit.innerHTML = '<span class="es-text">HORAS</span><span class="en-text">HOURS</span>';
+    cdLabel.innerHTML = '<span class="es-text">hasta el vuelo ✈️</span><span class="en-text">until the flight ✈️</span>';
+
+  } else if (jstDate < '2026-05-11') {
+    // ── In the air ──
+    strip.style.background = 'var(--indigo)';
+    cdNum.textContent = '✈️';
+    cdNum.style.fontSize = '42px';
+    cdUnit.innerHTML = '';
+    cdLabel.innerHTML = '<span class="es-text">¡En camino a Japón!</span><span class="en-text">On our way to Japan!</span>';
+
+  } else {
+    // ── After the trip ──
+    strip.style.background = 'var(--forest)';
+    cdNum.textContent = '✓';
+    cdUnit.innerHTML = '';
+    cdLabel.innerHTML = '<span class="es-text">¡El viaje fue un éxito! 🎉</span><span class="en-text">The trip was a success! 🎉</span>';
+  }
+}
+
+// ── TODAY CARD CLASSIFICATION ──
 function setupTodayHighlight() {
-  // Clean up previous state before re-running (e.g. at JST midnight)
+  // Clean up previous state before re-running at JST midnight
   document.querySelectorAll('.day-card').forEach(c => {
     c.classList.remove('today', 'past');
     const badge = c.querySelector('.today-badge');
     if (badge) badge.remove();
   });
 
-  const today = new Date();
-  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const tripStart = new Date(2026, 4, 11); // May 11
-  const tripEnd   = new Date(2026, 4, 22); // May 22
-  const msPerDay  = 86400000;
-
-  const strip = document.getElementById('countdown-strip');
-  const cdDays = document.getElementById('cd-days');
-  const cdLabel = document.getElementById('countdown-label');
-
-  if (todayMidnight < tripStart) {
-    const diff = Math.ceil((tripStart - todayMidnight) / msPerDay);
-    cdDays.textContent = diff;
-  } else if (todayMidnight >= tripStart && todayMidnight <= tripEnd) {
-    const dayNum = Math.floor((todayMidnight - tripStart) / msPerDay) + 11;
-    strip.style.background = 'var(--vermillion)';
-    cdDays.textContent = '🌸';
-    cdDays.style.fontSize = '36px';
-    cdLabel.innerHTML = `<span class="es-text">¡Estamos en Japón! Día ${dayNum}</span><span class="en-text">We\'re in Japan! Day ${dayNum}</span>`;
-    if (document.body.hasAttribute('data-en')) {
-      cdLabel.querySelector('.es-text').style.display='none';
-      cdLabel.querySelector('.en-text').style.display='inline';
-    }
-  } else {
-    strip.style.background = 'var(--forest)';
-    cdDays.textContent = '✓';
-    cdDays.style.fontSize = '36px';
-    cdLabel.innerHTML = `<span class="es-text">¡El viaje fue un éxito! 🎉</span><span class="en-text">The trip was a success! 🎉</span>`;
-  }
-
-  const cityMap = {
+  const todayJST = getJSTDateStr();
+  const cityMap  = {
     '2026-05-11':'tokio','2026-05-12':'tokio','2026-05-13':'tokio',
     '2026-05-14':'tokio','2026-05-15':'tokio','2026-05-16':'tokio',
     '2026-05-17':'kioto','2026-05-18':'kioto','2026-05-19':'kioto',
@@ -1164,15 +1197,14 @@ function setupTodayHighlight() {
   };
 
   document.querySelectorAll('.day-card[data-date]').forEach(card => {
-    const parts = card.dataset.date.split('-');
-    const cardDay = new Date(+parts[0], +parts[1]-1, +parts[2]);
-    if (cardDay.getTime() === todayMidnight.getTime()) {
+    const d = card.dataset.date;
+    if (d === todayJST) {
       card.classList.add('today');
       const badge = document.createElement('div');
       badge.className = 'today-badge';
       badge.innerHTML = '<span class="es-text">📍 HOY</span><span class="en-text">📍 TODAY</span>';
       card.insertBefore(badge, card.firstChild);
-      const city = cityMap[card.dataset.date];
+      const city = cityMap[d];
       if (city) {
         const cityBtn = document.querySelector(`[data-city="${city}"]`);
         if (cityBtn) {
@@ -1182,7 +1214,7 @@ function setupTodayHighlight() {
           cityBtn.classList.add('active');
         }
       }
-    } else if (cardDay < todayMidnight) {
+    } else if (d < todayJST) {
       card.classList.add('past');
     }
   });
@@ -1214,21 +1246,23 @@ function updateTodaySpotlight() {
 
 // ── JST MIDNIGHT REFRESH ──
 function scheduleJSTMidnightRefresh() {
-  const jstOffset = 9 * 60 * 60 * 1000;
   const nowUTC = Date.now();
-  const nowJST = nowUTC + jstOffset;
+  const nowJST = nowUTC + 9 * 3600 * 1000;
   const startOfTodayJST = Math.floor(nowJST / 86400000) * 86400000;
-  const nextMidnightUTC = startOfTodayJST + 86400000 - jstOffset;
+  const nextMidnightUTC = startOfTodayJST + 86400000 - 9 * 3600 * 1000;
   const msUntil = nextMidnightUTC - nowUTC;
 
   setTimeout(() => {
+    updateCountdown();
     setupTodayHighlight();
     updateTodaySpotlight();
-    scheduleJSTMidnightRefresh(); // schedule next day
+    scheduleJSTMidnightRefresh();
   }, msUntil);
 }
 
 // Init
+updateCountdown();
+setInterval(updateCountdown, 60 * 1000); // refresh every minute (for the hours countdown)
 setupTodayHighlight();
 updateTodaySpotlight();
 scheduleJSTMidnightRefresh();
