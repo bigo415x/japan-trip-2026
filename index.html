@@ -67,9 +67,13 @@ body {
 .city-nav { display:flex; }
 .city-nav-cities { border-bottom:1px solid rgba(247,242,232,0.12); }
 .city-nav-extras { border-bottom:2px solid var(--vermillion); }
-.city-tab { flex:1; padding:11px 8px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+.city-tab { flex:1; padding:11px 8px; text-align:center; color:rgba(247,242,232,0.5); font-size:13px; font-family:'Noto Serif JP',serif; cursor:pointer; border:none; background:none; transition:all 0.2s; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; text-decoration:none; display:block; }
 .city-tab.active { color:var(--washi); border-bottom-color:var(--vermillion); }
 .city-tab:hover:not(.active) { color:rgba(247,242,232,0.8); }
+
+/* ── TODAY SPOTLIGHT ── */
+.today-spotlight { background:var(--washi); padding-bottom:8px; }
+.today-spotlight .day-card { margin:0 16px; }
 
 /* ── CITY SECTION ── */
 .main { padding:0 0 80px; }
@@ -232,6 +236,9 @@ body {
   </div>
 </div>
 
+<!-- TODAY SPOTLIGHT -->
+<div class="today-spotlight" id="today-spotlight" style="display:none;"></div>
+
 <!-- CITY NAV -->
 <div class="city-nav-wrap" id="city-nav-wrap">
   <nav class="city-nav city-nav-cities">
@@ -242,6 +249,7 @@ body {
   <nav class="city-nav city-nav-extras">
     <button class="city-tab" data-city="frases" onclick="showCity('frases',this)">🗣️ <span class="es-text">Frases</span><span class="en-text">Phrases</span></button>
     <button class="city-tab" data-city="consejos" onclick="showCity('consejos',this)">💡 <span class="es-text">Consejos</span><span class="en-text">Tips</span></button>
+    <a class="city-tab" href="https://bigo415x.github.io/japan-audio-tour" target="_blank" rel="noopener">🎧 <span class="es-text">Audio Tours</span><span class="en-text">Audio Tours</span></a>
   </nav>
 </div>
 
@@ -1111,6 +1119,13 @@ function setupCarousel(trackId, dotsId) {
 
 // ── COUNTDOWN + TODAY ──
 function setupTodayHighlight() {
+  // Clean up previous state before re-running (e.g. at JST midnight)
+  document.querySelectorAll('.day-card').forEach(c => {
+    c.classList.remove('today', 'past');
+    const badge = c.querySelector('.today-badge');
+    if (badge) badge.remove();
+  });
+
   const today = new Date();
   const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const tripStart = new Date(2026, 4, 11); // May 11
@@ -1173,8 +1188,50 @@ function setupTodayHighlight() {
   });
 }
 
+// ── TODAY SPOTLIGHT ──
+function updateTodaySpotlight() {
+  const spotlight = document.getElementById('today-spotlight');
+  if (!spotlight) return;
+  const todayCard = document.querySelector('.day-card.today');
+  if (!todayCard) { spotlight.style.display = 'none'; return; }
+
+  spotlight.innerHTML = '';
+
+  // Section label
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.innerHTML = '<div class="section-label-line"></div>'
+    + '<div class="section-label-text" style="color:var(--vermillion)">📍 <span class="es-text">Hoy</span><span class="en-text">Today</span></div>'
+    + '<div class="section-label-line"></div>';
+  spotlight.appendChild(label);
+
+  // Deep-clone the matching day card (all content, all event handlers via onclick)
+  const clone = todayCard.cloneNode(true);
+  spotlight.appendChild(clone);
+
+  spotlight.style.display = 'block';
+}
+
+// ── JST MIDNIGHT REFRESH ──
+function scheduleJSTMidnightRefresh() {
+  const jstOffset = 9 * 60 * 60 * 1000;
+  const nowUTC = Date.now();
+  const nowJST = nowUTC + jstOffset;
+  const startOfTodayJST = Math.floor(nowJST / 86400000) * 86400000;
+  const nextMidnightUTC = startOfTodayJST + 86400000 - jstOffset;
+  const msUntil = nextMidnightUTC - nowUTC;
+
+  setTimeout(() => {
+    setupTodayHighlight();
+    updateTodaySpotlight();
+    scheduleJSTMidnightRefresh(); // schedule next day
+  }, msUntil);
+}
+
 // Init
 setupTodayHighlight();
+updateTodaySpotlight();
+scheduleJSTMidnightRefresh();
 setupCarousel('carousel-tokio', 'dots-tokio');
 setupCarousel('carousel-kioto', 'dots-kioto');
 setupCarousel('carousel-osaka', 'dots-osaka');
